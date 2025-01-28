@@ -30,6 +30,8 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
+        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+        sudo apt-get update
         sudo apt-get build-dep freecad
         mkdir build
         cmake -B build
