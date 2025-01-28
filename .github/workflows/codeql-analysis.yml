@@ -30,7 +30,7 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo apt build-dep freecad
+        sudo apt-get build-dep freecad
         mkdir build
         cmake -B build
         cd build
