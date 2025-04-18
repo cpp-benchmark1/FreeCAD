@@ -1,0 +1,77 @@
+name: Coverity Scan
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: "Languages to analyze"
+        required: true
+        default: "c-cpp"
+jobs:
+  coverity:
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: c-cpp
+          build-mode: manual
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Download and Install Coverity Tool
+        run: |
+          wget https://scan.coverity.com/download/linux64 \
+            --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=${{ github.repository }}" \
+            -O coverity_tool.tgz
+          mkdir coverity_tool
+          tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
+          export PATH=$PWD/coverity_tool/bin:$PATH
+          echo "Coverity Tool installed successfully"
+      - name: Build with Coverity
+        run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          sudo apt-get build-dep freecad
+          mkdir build
+          cmake -B build
+          cd build
+          coverity_tool/bin/cov-build --dir cov-int make || true
+      - name: Compress with bzip2
+        run: |
+          tar cjvf myproject.tar.bz2 cov-int
+        id: compress
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "coverity-scan-${{ github.run_id }}"
+          release_name: "Coverity Scan Results"
+          body: "Automated Coverity Scan Results"
+          draft: false
+          prerelease: false
+      - name: Upload Asset to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: myproject.tar.bz2
+          asset_name: myproject.tar.bz2
+          asset_content_type: application/x-bzip2
+      - name: Notify Coverity Scan
+        run: |
+          curl --data "project=${{ github.repository }}&token=${{ secrets.COVERITY_TOKEN }}&email=cpp.benchmark@proton.me&url=https://github.com/${{ github.repository }}/releases/download/coverity-scan-${{ github.run_id }}/myproject.tar.bz2&version=1.0&description=Automated+Coverity+Scan"\
+          https://scan.coverity.com/builds
