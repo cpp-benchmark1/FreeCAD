@@ -73,5 +73,4 @@ jobs:
           asset_content_type: application/x-bzip2
       - name: Notify Coverity Scan
         run: |
-          curl --data "project=${{ github.repository }}&token=${{ secrets.COVERITY_TOKEN }}&email=cpp.benchmark@proton.me&url=https://github.com/${{ github.repository }}/releases/download/coverity-scan-${{ github.run_id }}/myproject.tar.bz2&version=1.0&description=Automated+Coverity+Scan"\
-          https://scan.coverity.com/builds
+          curl --data "project=${{ github.repository }}&token=${{ secrets.COVERITY_TOKEN }}&email=cpp.benchmark@proton.me&url=https://github.com/${{ github.repository }}/releases/download/coverity-scan-${{ github.run_id }}/myproject.tar.bz2&version=1.0&description=Automated+Coverity+Scan" https://scan.coverity.com/builds
