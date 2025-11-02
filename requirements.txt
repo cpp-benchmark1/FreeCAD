@@ -20,3 +20,4 @@ requests==2.32.0
 rpdb2==2.0.0.1.2
 sets==0.3.2
 vermin==1.5.1
+starlette>=0.49.1 # not directly required, pinned by Snyk to avoid a vulnerability
